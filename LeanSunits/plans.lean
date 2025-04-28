@@ -65,9 +65,6 @@ instance : IsLocalization (M S) <| S.integer K where
       simp_all
     use unitEquivUnitsInteger S K ⟨x, this⟩
     rfl -/
-
-
-
   surj' := by
     intro v
     simp only [Prod.exists, Subtype.exists, exists_prop]
@@ -78,7 +75,7 @@ instance : IsLocalization (M S) <| S.integer K where
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
     intro r₁ r₂ h
     use 1
-    constructor
+    constructor--well done!
     simp [M]
     intro s hs
     have : Prime s.asIdeal := HeightOneSpectrum.prime s
