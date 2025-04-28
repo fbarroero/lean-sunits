@@ -38,9 +38,7 @@ def M : Submonoid R := {
 
 #count_heartbeats in
 instance : IsLocalization (M S) <| S.integer K where
-  map_units' := by /- ## what is below should be commented out when working on thing below because it takes a bit to compile
-    -/
-
+  map_units' := by sorry  /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
     intro r hr
@@ -51,17 +49,12 @@ instance : IsLocalization (M S) <| S.integer K where
       val_inv := by simp [h₀]
       inv_val := by simp [h₀]
     }
-
     have : x ∈ S.unit K := by
-      simp only [unit, x]
       intro v hv
-      simp_all only [x]
-      have := hr.1
-      have hmem : r ∈ (v.asIdeal.carrier)ᶜ := by
-        simp_all only [mem_inter_iff, SetLike.mem_coe, mem_nonZeroDivisors_iff_ne_zero, ne_eq, not_false_eq_true,
-          and_self, mem_iInter, mem_compl_iff, Submodule.carrier_eq_coe, x]
-      simp at hmem
+      have hmem : r ∉ v.asIdeal := by simp_all
       rw [HeightOneSpectrum.valuation_of_algebraMap, HeightOneSpectrum.intValuation_apply]
+      --make a PR with this?
+
       have := v.intValuation_le_one r
       rw [le_iff_lt_or_eq] at this
       have : ¬ v.intValuationDef r < 1 := by
@@ -69,25 +62,27 @@ instance : IsLocalization (M S) <| S.integer K where
         exact hmem
       simp_all
     use unitEquivUnitsInteger S K ⟨x, this⟩
-    simp_all only [x]
-    rfl
+    rfl -/
   surj' := by
     intro v
     simp only [Prod.exists, Subtype.exists, exists_prop]
-
+    -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
+    --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
     sorry
   exists_of_eq := by
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
     intro r₁ r₂ h
     use 1
     constructor
-    simp [M]
-    --easy
+    simp only [M, Submodule.carrier_eq_coe, Submonoid.mem_mk, Subsemigroup.mem_mk, mem_inter_iff,
+      mem_iInter, mem_compl_iff, SetLike.mem_coe, mem_nonZeroDivisors_iff_ne_zero, ne_eq,
+      one_ne_zero, not_false_eq_true, and_true]
+
+    --easy: prove that 1 in not in any proper ideal
     sorry
     left
-    have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := by
-      exact congrArg Subtype.val h
-    simp at this
+    have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := congrArg Subtype.val h
+    simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
     exact this
 end
 
