@@ -36,20 +36,22 @@ def M : Submonoid R := {
     exact Ideal.IsPrime.ne_top'
 }
 
+#count_heartbeats in
 instance : IsLocalization (M S) <| S.integer K where
-  map_units' := by
-    simp only [M, Submodule.carrier_eq_coe, IsUnit, Subtype.forall, Submonoid.mem_mk,
-      Subsemigroup.mem_mk, mem_iInter, mem_compl_iff, SetLike.mem_coe]
+  map_units' := by /- ## what is below should be commented out when working on thing below because it takes a bit to compile
+    -/
+
+    simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
+      Subsemigroup.mem_mk]
     intro r hr
-    have h₀ : r ≠ 0 := by
-      simp_all only [mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe, mem_nonZeroDivisors_iff_ne_zero, ne_eq,
-        not_false_eq_true]
+    have h₀ : r ≠ 0 := nonZeroDivisors.ne_zero hr.2
     let x : Kˣ := {
       val := algebraMap R K r
       inv := (algebraMap R K r)⁻¹
       val_inv := by simp [h₀]
       inv_val := by simp [h₀]
     }
+
     have : x ∈ S.unit K := by
       simp only [unit, x]
       intro v hv
@@ -69,10 +71,24 @@ instance : IsLocalization (M S) <| S.integer K where
     use unitEquivUnitsInteger S K ⟨x, this⟩
     simp_all only [x]
     rfl
-  surj' := sorry
-  exists_of_eq := sorry
+  surj' := by
+    intro v
+    simp only [Prod.exists, Subtype.exists, exists_prop]
 
-
+    sorry
+  exists_of_eq := by
+    simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
+    intro r₁ r₂ h
+    use 1
+    constructor
+    simp [M]
+    --easy
+    sorry
+    left
+    have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := by
+      exact congrArg Subtype.val h
+    simp at this
+    exact this
 end
 
 end Set
