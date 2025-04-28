@@ -13,8 +13,8 @@ universe u v
 variable
   {R : Type u} [CommRing R] [IsDedekindDomain R]
   (S : Set <| HeightOneSpectrum R) (K : Type v) [Field K] [Algebra R K] [IsFractionRing R K]
--- {R_S : Type u} [CommRing R_S] [IsLocalization M ]
--- M = (union of primes in S)^c = (intersection of complements)
+
+--- M is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
 
 def M : Submonoid R := {
   carrier := (⋂ (v : HeightOneSpectrum R) (_ : v ∉ S), (v.asIdeal.carrier)ᶜ) ∩ (nonZeroDivisors R)
@@ -36,9 +36,11 @@ def M : Submonoid R := {
     exact Ideal.IsPrime.ne_top'
 }
 
+--- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
+
 #count_heartbeats in
 instance : IsLocalization (M S) <| S.integer K where
-  map_units' := by sorry  /- ## what is below should be commented out when working on thing below because it takes a bit to compile
+  map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
     intro r hr
@@ -63,6 +65,9 @@ instance : IsLocalization (M S) <| S.integer K where
       simp_all
     use unitEquivUnitsInteger S K ⟨x, this⟩
     rfl -/
+
+
+
   surj' := by
     intro v
     simp only [Prod.exists, Subtype.exists, exists_prop]
@@ -74,12 +79,11 @@ instance : IsLocalization (M S) <| S.integer K where
     intro r₁ r₂ h
     use 1
     constructor
-    simp only [M, Submodule.carrier_eq_coe, Submonoid.mem_mk, Subsemigroup.mem_mk, mem_inter_iff,
-      mem_iInter, mem_compl_iff, SetLike.mem_coe, mem_nonZeroDivisors_iff_ne_zero, ne_eq,
-      one_ne_zero, not_false_eq_true, and_true]
-
-    --easy: prove that 1 in not in any proper ideal
-    sorry
+    simp [M]
+    intro s hs
+    have : Prime s.asIdeal := HeightOneSpectrum.prime s
+    refine (Ideal.ne_top_iff_one s.asIdeal).mp ?_
+    exact Ideal.IsPrime.ne_top'
     left
     have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := congrArg Subtype.val h
     simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
