@@ -17,12 +17,23 @@ variable
 -- M = (union of primes in S)^c = (intersection of complements)
 
 def M : Submonoid R := {
-  carrier := ⊓ (v) (_ : v ∈ S), (v.asIdeal.carrier)ᶜ
-  mul_mem' := sorry
+  carrier := (⋂ (v : HeightOneSpectrum R) (_ : v ∈ S), (v.asIdeal.carrier)ᶜ)
+  mul_mem' := by
+    simp only [Submodule.carrier_eq_coe, mem_iInter, mem_compl_iff, SetLike.mem_coe]
+    intro a b ha hb v hv
+    specialize ha v hv
+    specialize hb v hv
+
+    sorry
   one_mem' := sorry
 }
 
-instance : IsLocalization M <| S.integer K :=
+
+
+instance : IsLocalization (R := R) (M S) <| S.integer K where
+  map_units' := sorry
+  surj' := sorry
+  exists_of_eq := sorry
 
 
 end

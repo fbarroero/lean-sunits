@@ -15,7 +15,7 @@ variable {R : Type} [CommRing R] [IsDedekindDomain R]
 -/
 
 @[simp]
-lemma foo : (One.one : Multiplicative ℤ) = 1 := rfl
+lemma foo {α : Type*} [Add α] [Zero α] : (One.one : Multiplicative α) = 1 := rfl
 
 /-- The map `Kˣ → ℤ` given by the valuation `v`.  -/
 noncomputable def IsDedekindDomain.HeightOneSpectrum.unitsHom : Kˣ →* Multiplicative ℤ where
