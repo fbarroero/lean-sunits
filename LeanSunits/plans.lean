@@ -13,8 +13,8 @@ universe u v
 variable
   {R : Type u} [CommRing R] [IsDedekindDomain R]
   (S : Set <| HeightOneSpectrum R) (K : Type v) [Field K] [Algebra R K] [IsFractionRing R K]
--- {R_S : Type u} [CommRing R_S] [IsLocalization M ]
--- M = (union of primes in S)^c = (intersection of complements)
+
+--- M is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
 
 def M : Submonoid R := {
   carrier := (⋂ (v : HeightOneSpectrum R) (_ : v ∉ S), (v.asIdeal.carrier)ᶜ) ∩ (nonZeroDivisors R)
@@ -36,11 +36,11 @@ def M : Submonoid R := {
     exact Ideal.IsPrime.ne_top'
 }
 
+--- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
+
 #count_heartbeats in
 instance : IsLocalization (M S) <| S.integer K where
-  map_units' := by /- ## what is below should be commented out when working on thing below because it takes a bit to compile
-    -/
-
+  map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
     intro r hr
@@ -71,10 +71,10 @@ instance : IsLocalization (M S) <| S.integer K where
     use unitEquivUnitsInteger S K ⟨x, this⟩
     simp_all only [x]
     rfl
+  -/
   surj' := by
     intro v
     simp only [Prod.exists, Subtype.exists, exists_prop]
-
     sorry
   exists_of_eq := by
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
@@ -82,8 +82,10 @@ instance : IsLocalization (M S) <| S.integer K where
     use 1
     constructor
     simp [M]
-    --easy
-    sorry
+    intro s hs
+    have : Prime s.asIdeal := HeightOneSpectrum.prime s
+    refine (Ideal.ne_top_iff_one s.asIdeal).mp ?_
+    exact Ideal.IsPrime.ne_top'
     left
     have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := by
       exact congrArg Subtype.val h
