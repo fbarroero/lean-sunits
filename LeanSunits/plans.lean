@@ -73,8 +73,22 @@ instance : IsLocalization (M S) <| S.integer K where
     rfl
   -/
   surj' := by
-    intro v
+    intro r
     simp only [Prod.exists, Subtype.exists, exists_prop]
+    have : ∀ v ∉ S, v.valuation K (↑r : K) ≥ 0 := by sorry
+    /- idea:
+      (1) every r : ↥(S.integer K) is in the fraction field K of R.
+      (2) we know that v(r) ≥ 0 for all ν ∉ S.
+      (3) we know that v(r) < 0 at most for a finite subset T of S.
+      (4) consider the ideal I = ∏ v \in T in R, p_v.
+      (5) THIS DOES BREAK FOR A GENERAL DEDEKIND DOMAIN. (The Picard group of an elliptic curve is infinite.)
+      The class group of R is finite (or better: torsion).
+      (6) There exists an integer n≥1 such that I^n is principal, i.e., (α_T)=I^n. This α_T : R has to satisfy v(α)≥n≥1 if v ∈ T and v(α)=0 elsewise.
+      (7) There exists an integer m≥1 such that β=(α_T^m)*r satisfies v(β)≥0.
+      (8) This should imply β : R.
+      (9) Use a_1 = (α_T^m) and a = β in goal.
+      (10) Win ;-).
+    -/
     sorry
   exists_of_eq := by
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
