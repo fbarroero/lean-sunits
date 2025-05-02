@@ -14,9 +14,9 @@ variable
   {R : Type u} [CommRing R] [IsDedekindDomain R]
   (S : Set <| HeightOneSpectrum R) (K : Type v) [Field K] [Algebra R K] [IsFractionRing R K]
 
---- M is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
+--- MultiplicativeSet is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
 
-def M : Submonoid R := {
+def MultiplicativeSet : Submonoid R := {
   carrier := (⋂ (v : HeightOneSpectrum R) (_ : v ∉ S), (v.asIdeal.carrier)ᶜ) ∩ (nonZeroDivisors R)
   mul_mem' := by
     simp only [Submodule.carrier_eq_coe, mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe,
@@ -36,10 +36,12 @@ def M : Submonoid R := {
     exact Ideal.IsPrime.ne_top'
 }
 
+theorem foo : S.MultiplicativeSet ≤ nonZeroDivisors R := fun _ h ↦ h.2
+
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 
-#count_heartbeats in
-instance : IsLocalization (M S) <| S.integer K where
+--#count_heartbeats in
+instance : IsLocalization S.MultiplicativeSet <| S.integer K where
   map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
@@ -75,16 +77,21 @@ instance : IsLocalization (M S) <| S.integer K where
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
     intro r₁ r₂ h
     use 1
-    constructor--well done!
-    simp [M]
-    intro s hs
-    have : Prime s.asIdeal := HeightOneSpectrum.prime s
-    refine (Ideal.ne_top_iff_one s.asIdeal).mp ?_
-    exact Ideal.IsPrime.ne_top'
-    left
-    have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := congrArg Subtype.val h
-    simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
-    exact this
-end
+    constructor
+    · simp only [MultiplicativeSet, Submodule.carrier_eq_coe, Submonoid.mem_mk,
+      Subsemigroup.mem_mk, mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe,
+      mem_nonZeroDivisors_iff_ne_zero, ne_eq, one_ne_zero, not_false_eq_true, and_true]
+      intro s hs
+      exact (Ideal.ne_top_iff_one s.asIdeal).mp Ideal.IsPrime.ne_top'
+    · left
+      have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := congrArg Subtype.val h
+      simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
+      exact this
 
+-- S.integers are a Dedekind domain.
+instance isDedekindDomain : IsDedekindDomain (S.integer K) := IsLocalization.isDedekindDomain _ (foo S) _
+
+
+
+end
 end Set
