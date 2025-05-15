@@ -15,9 +15,9 @@ variable
   (S : Set <| HeightOneSpectrum R)
   (K : Type v) [Field K] [Algebra R K] [IsFractionRing R K]
 
---- M is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
+--- MultiplicativeSet is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
 
-def M : Submonoid R := {
+def MultiplicativeSet : Submonoid R := {
   carrier := (⋂ (v : HeightOneSpectrum R) (_ : v ∉ S), (v.asIdeal.carrier)ᶜ) ∩ (nonZeroDivisors R)
   mul_mem' := by
     simp only [Submodule.carrier_eq_coe, mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe,
@@ -37,10 +37,12 @@ def M : Submonoid R := {
     exact Ideal.IsPrime.ne_top'
 }
 
+theorem foo : S.MultiplicativeSet ≤ nonZeroDivisors R := fun _ h ↦ h.2
+
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 
-#count_heartbeats in
-instance : IsLocalization (M S) <| S.integer K where
+--#count_heartbeats in
+instance : IsLocalization S.MultiplicativeSet <| S.integer K where
   map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
@@ -52,17 +54,12 @@ instance : IsLocalization (M S) <| S.integer K where
       val_inv := by simp [h₀]
       inv_val := by simp [h₀]
     }
-
     have : x ∈ S.unit K := by
-      simp only [unit, x]
       intro v hv
-      simp_all only [x]
-      have := hr.1
-      have hmem : r ∈ (v.asIdeal.carrier)ᶜ := by
-        simp_all only [mem_inter_iff, SetLike.mem_coe, mem_nonZeroDivisors_iff_ne_zero, ne_eq, not_false_eq_true,
-          and_self, mem_iInter, mem_compl_iff, Submodule.carrier_eq_coe, x]
-      simp at hmem
+      have hmem : r ∉ v.asIdeal := by simp_all
       rw [HeightOneSpectrum.valuation_of_algebraMap, HeightOneSpectrum.intValuation_apply]
+      --make a PR with this?
+
       have := v.intValuation_le_one r
       rw [le_iff_lt_or_eq] at this
       have : ¬ v.intValuationDef r < 1 := by
@@ -70,12 +67,12 @@ instance : IsLocalization (M S) <| S.integer K where
         exact hmem
       simp_all
     use unitEquivUnitsInteger S K ⟨x, this⟩
-    simp_all only [x]
-    rfl
-  -/
+    rfl -/
   surj' := by
     intro r
     simp only [Prod.exists, Subtype.exists, exists_prop]
+    -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
+    --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
     -- We know that v(r) ≥ 0 for all ν ∉ S.
     have : ∀ v ∉ S, v.valuation K (↑r : K) ≥ 0 := by
       intro v hv
@@ -120,16 +117,20 @@ instance : IsLocalization (M S) <| S.integer K where
     intro r₁ r₂ h
     use 1
     constructor
-    simp [M]
-    intro s hs
-    have : Prime s.asIdeal := HeightOneSpectrum.prime s
-    refine (Ideal.ne_top_iff_one s.asIdeal).mp ?_
-    exact Ideal.IsPrime.ne_top'
-    left
-    have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := by
-      exact congrArg Subtype.val h
-    simp at this
-    exact this
-end
+    · simp only [MultiplicativeSet, Submodule.carrier_eq_coe, Submonoid.mem_mk,
+      Subsemigroup.mem_mk, mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe,
+      mem_nonZeroDivisors_iff_ne_zero, ne_eq, one_ne_zero, not_false_eq_true, and_true]
+      intro s hs
+      exact (Ideal.ne_top_iff_one s.asIdeal).mp Ideal.IsPrime.ne_top'
+    · left
+      have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := congrArg Subtype.val h
+      simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
+      exact this
 
+-- S.integers are a Dedekind domain.
+instance isDedekindDomain : IsDedekindDomain (S.integer K) := IsLocalization.isDedekindDomain _ (foo S) _
+
+
+
+end
 end Set
