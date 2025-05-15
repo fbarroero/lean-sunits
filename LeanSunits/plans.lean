@@ -73,45 +73,55 @@ instance : IsLocalization S.MultiplicativeSet <| S.integer K where
     simp only [Prod.exists, Subtype.exists, exists_prop]
     -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
     --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
+
     -- We know that v(r) ≥ 0 for all ν ∉ S.
-    have : ∀ v ∉ S, v.valuation K (↑r : K) ≥ 0 := by
-      intro v hv
-      simp
+    have : ∀ v ∉ S, v.valuation K r ≤ 1 := by
+      exact fun v a ↦ integer_valuation_le_one S K r a
+
     -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T.
-    have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≥ 0 := by
-      simp_all only [zero_le', implies_true, mem_diff, Finset.mem_coe, exists_const]
+    have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≤ 1 := by
+      sorry
+
     let ⟨T, hT⟩ := this
-    -- Consider the ideal I = ∏ v ∈ T, p_v.
     let I : Ideal R := ∏ v ∈ T, v.asIdeal
 
+    -- Show that v(I) = 1 for all v ∈ T.
+    have : ∀ v ∈ T, FractionalIdeal.count K v I = 1 := by
+      sorry
 
-    have : ∀ w ∈ T, FractionalIdeal.count K w I = ∑ v ∈ T, FractionalIdeal.count K w v.asIdeal := by
-      intro w
-      refine FractionalIdeal.count_finsuppProd K w T
+    -- There exists n > 0 such that I^n is principal.
+    have : ∃ n : ℕ, 0 < n ∧ (I^n).IsPrincipal := by
+      sorry
+    -- NumberField.RingOfIntegers.instFintypeClassGroup
 
-    -- FractionalIdeal.count_prod
-    have : ∃ I : (Ideal R), ∀ v ∈ T, v.valuation R I ≥ 1 := by sorry
+    -- There exists α such that I^n = (α)
+    obtain ⟨n, hn, ⟨α,hα⟩⟩ := this
 
+    -- This α : R has to satisfy v(α) ≥ 1 if v ∈ T [and v(α) ≥ 0 elsewise].
+    have : ∀ v ∈ T, v.valuation K (algebraMap R K α) < 1 := by
+      sorry
 
-      -- Set.Finite; theorem Ideal.finite_factors
-      /- idea:
-      (1) every r : ↥(S.integer K) is in the fraction field K of R.
-      (2) we know that v(r) ≥ 0 for all ν ∉ S.
+    have : ∃ m : ℕ, ∀ v ∈ T, v.valuation K ((algebraMap R K α^m) * r) ≤ 1 := by
+      sorry
 
-      (4)
-      (5) THIS DOES BREAK FOR A GENERAL DEDEKIND DOMAIN? Use Abel's Theorem to get a counterexample to the whole assertion.
-      The class group of R is finite (or better: torsion).
-        NumberField.RingOfIntegers.instFintypeClassGroup
-      (6) There exists an integer n≥1 such that I^n is principal, i.e., (α_T)=I^n.
+    obtain ⟨m, hm⟩ := this
 
+    have : ∃ β : R, (algebraMap R K β) = ((algebraMap R K α^m) * r) := by
+      sorry
 
-      This α_T : R has to satisfy v(α)≥n≥1 if v ∈ T and v(α)=0 elsewise.
-      (7) There exists an integer m≥1 such that β=(α_T^m)*r satisfies v(β)≥0.
-      (8) This should imply β : R.
-      (9) Use a_1 = (α_T^m) and a = β in goal.
-      (10) Win ;-).
-    -/
-    sorry
+    obtain ⟨β, hβ⟩ := this
+
+    use β
+
+    use α^m
+
+    constructor
+    ·
+      sorry
+    ·
+      simp [hβ]
+      sorry
+
   exists_of_eq := by
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
     intro r₁ r₂ h
