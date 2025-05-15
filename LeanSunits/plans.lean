@@ -12,7 +12,8 @@ universe u v
 
 variable
   {R : Type u} [CommRing R] [IsDedekindDomain R]
-  (S : Set <| HeightOneSpectrum R) (K : Type v) [Field K] [Algebra R K] [IsFractionRing R K]
+  (S : Set <| HeightOneSpectrum R)
+  (K : Type v) [Field K] [Algebra R K] [IsFractionRing R K]
 
 --- M is the multiplicative submonoid consisting of all r ∈ R such that ν(r) ≥ 0 for all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with (nonZeroDivisors R).
 
@@ -75,15 +76,39 @@ instance : IsLocalization (M S) <| S.integer K where
   surj' := by
     intro r
     simp only [Prod.exists, Subtype.exists, exists_prop]
-    have : ∀ v ∉ S, v.valuation K (↑r : K) ≥ 0 := by sorry
-    /- idea:
+    -- We know that v(r) ≥ 0 for all ν ∉ S.
+    have : ∀ v ∉ S, v.valuation K (↑r : K) ≥ 0 := by
+      intro v hv
+      simp
+    -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T.
+    have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≥ 0 := by
+      simp_all only [zero_le', implies_true, mem_diff, Finset.mem_coe, exists_const]
+    let ⟨T, hT⟩ := this
+    -- Consider the ideal I = ∏ v ∈ T, p_v.
+    let I : Ideal R := ∏ v ∈ T, v.asIdeal
+
+
+    have : ∀ w ∈ T, FractionalIdeal.count K w I = ∑ v ∈ T, FractionalIdeal.count K w v.asIdeal := by
+      intro w
+      refine FractionalIdeal.count_finsuppProd K w T
+
+    -- FractionalIdeal.count_prod
+    have : ∃ I : (Ideal R), ∀ v ∈ T, v.valuation R I ≥ 1 := by sorry
+
+
+      -- Set.Finite; theorem Ideal.finite_factors
+      /- idea:
       (1) every r : ↥(S.integer K) is in the fraction field K of R.
       (2) we know that v(r) ≥ 0 for all ν ∉ S.
-      (3) we know that v(r) < 0 at most for a finite subset T of S.
-      (4) consider the ideal I = ∏ v \in T in R, p_v.
-      (5) THIS DOES BREAK FOR A GENERAL DEDEKIND DOMAIN. (The Picard group of an elliptic curve is infinite.)
+
+      (4)
+      (5) THIS DOES BREAK FOR A GENERAL DEDEKIND DOMAIN? Use Abel's Theorem to get a counterexample to the whole assertion.
       The class group of R is finite (or better: torsion).
-      (6) There exists an integer n≥1 such that I^n is principal, i.e., (α_T)=I^n. This α_T : R has to satisfy v(α)≥n≥1 if v ∈ T and v(α)=0 elsewise.
+        NumberField.RingOfIntegers.instFintypeClassGroup
+      (6) There exists an integer n≥1 such that I^n is principal, i.e., (α_T)=I^n.
+
+
+      This α_T : R has to satisfy v(α)≥n≥1 if v ∈ T and v(α)=0 elsewise.
       (7) There exists an integer m≥1 such that β=(α_T^m)*r satisfies v(β)≥0.
       (8) This should imply β : R.
       (9) Use a_1 = (α_T^m) and a = β in goal.
