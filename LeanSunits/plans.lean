@@ -4,7 +4,7 @@ namespace Set
 
 noncomputable section
 
-open IsDedekindDomain
+open IsDedekindDomain IsDedekindDomain.HeightOneSpectrum
 
 open scoped nonZeroDivisors
 
@@ -75,10 +75,10 @@ instance : IsLocalization S.MultiplicativeSet <| S.integer K where
     --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
 
     -- We know that v(r) ≥ 0 for all ν ∉ S.
-    have : ∀ v ∉ S, v.valuation K r ≤ 1 := by
-      exact fun v a ↦ integer_valuation_le_one S K r a
+    --useless for the moment
+    have : ∀ v ∉ S, v.valuation K r ≤ 1 := fun _ h ↦ integer_valuation_le_one S K r h
 
-    -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T.
+    -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T. this is where the denominator of r lies
     have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≤ 1 := by
       sorry
 
@@ -86,22 +86,31 @@ instance : IsLocalization S.MultiplicativeSet <| S.integer K where
     let I : Ideal R := ∏ v ∈ T, v.asIdeal
 
     -- Show that v(I) = 1 for all v ∈ T.
-    have : ∀ v ∈ T, FractionalIdeal.count K v I = 1 := by
+    --useless for the moment
+    have h_count : ∀ v ∈ T, FractionalIdeal.count K v I = 1 := by
+      intro v hv
+      simp [I, hT, hv]
+
       sorry
 
     -- There exists n > 0 such that I^n is principal.
-    have : ∃ n : ℕ, 0 < n ∧ (I^n).IsPrincipal := by
+    have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
+      -- here we need the class group of the Dedekind domain to be a torsion group
       sorry
     -- NumberField.RingOfIntegers.instFintypeClassGroup
 
     -- There exists α such that I^n = (α)
-    obtain ⟨n, hn, ⟨α,hα⟩⟩ := this
+    obtain ⟨n, hn, ⟨α, hα⟩⟩ := this
 
     -- This α : R has to satisfy v(α) ≥ 1 if v ∈ T [and v(α) ≥ 0 elsewise].
     have : ∀ v ∈ T, v.valuation K (algebraMap R K α) < 1 := by
+      intro v hv
+      rw [valuation_lt_one_iff_mem]
+
+      --simp [HeightOneSpectrum.valuation, HeightOneSpectrum.intValuation, HeightOneSpectrum.intValuationDef]
       sorry
 
-    have : ∃ m : ℕ, ∀ v ∈ T, v.valuation K ((algebraMap R K α^m) * r) ≤ 1 := by
+    have : ∃ m : ℕ, ∀ v ∈ T, v.valuation K ((algebraMap R K α ^ m) * r) ≤ 1 := by
       sorry
 
     obtain ⟨m, hm⟩ := this
@@ -118,8 +127,7 @@ instance : IsLocalization S.MultiplicativeSet <| S.integer K where
     constructor
     ·
       sorry
-    ·
-      simp [hβ]
+    · simp [hβ]
       sorry
 
   exists_of_eq := by
