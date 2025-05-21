@@ -41,8 +41,10 @@ theorem foo : S.MultiplicativeSet ≤ nonZeroDivisors R := fun _ h ↦ h.2
 
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 
+#check (ClassGroup R)
+
 --#count_heartbeats in
-instance : IsLocalization S.MultiplicativeSet <| S.integer K where
+instance (h :  Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.MultiplicativeSet <| S.integer K where
   map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
@@ -95,6 +97,7 @@ instance : IsLocalization S.MultiplicativeSet <| S.integer K where
 
     -- There exists n > 0 such that I^n is principal.
     have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
+
       -- here we need the class group of the Dedekind domain to be a torsion group
       sorry
     -- NumberField.RingOfIntegers.instFintypeClassGroup
