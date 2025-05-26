@@ -41,10 +41,8 @@ theorem foo : S.MultiplicativeSet ≤ nonZeroDivisors R := fun _ h ↦ h.2
 
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 
-#check (ClassGroup R)
-
 --#count_heartbeats in
-instance (h :  Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.MultiplicativeSet <| S.integer K where
+instance inst (h : Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.MultiplicativeSet <| S.integer K where
   map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
     simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
       Subsemigroup.mem_mk]
@@ -94,13 +92,28 @@ instance (h :  Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.Multiplicativ
       simp [I, hT, hv]
 
       sorry
-
+    have hI_ne_zero : I ≠ 0 := by
+      sorry
     -- There exists n > 0 such that I^n is principal.
     have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
+      let I' : (FractionalIdeal (nonZeroDivisors R) K)ˣ :={
+        val:= (FractionalIdeal.coeIdeal I)
+        inv := (FractionalIdeal.coeIdeal I)⁻¹
+        val_inv := by aesop
+        inv_val := by aesop
+      }
+      let I₀ := ClassGroup.mk I'
+      have : IsOfFinOrder I₀ := h I₀
+      rw [ isOfFinOrder_iff_pow_eq_one] at this
+      obtain ⟨n, hn, hI'⟩ := this
+      refine ⟨n, hn, ?_⟩
+      simp [I₀] at hI'
+      have :  ClassGroup.mk I' ^ n =  ClassGroup.mk (I' ^ n) := Eq.symm (MonoidHom.map_pow ClassGroup.mk I' n)
+      rw [this, ClassGroup.mk_eq_one_iff] at hI'
+      --better change claim of this lemma...
 
       -- here we need the class group of the Dedekind domain to be a torsion group
       sorry
-    -- NumberField.RingOfIntegers.instFintypeClassGroup
 
     -- There exists α such that I^n = (α)
     obtain ⟨n, hn, ⟨α, hα⟩⟩ := this
@@ -149,7 +162,9 @@ instance (h :  Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.Multiplicativ
       exact this
 
 -- S.integers are a Dedekind domain.
-instance isDedekindDomain : IsDedekindDomain (S.integer K) := IsLocalization.isDedekindDomain _ (foo S) _
+instance isDedekindDomain (h : Monoid.IsTorsion (ClassGroup R)) : IsDedekindDomain (S.integer K) := by
+  have : IsLocalization S.MultiplicativeSet ↥(S.integer K) := inst S K h
+  exact  IsLocalization.isDedekindDomain _ (foo S) _
 
 
 
