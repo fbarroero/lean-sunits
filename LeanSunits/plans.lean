@@ -27,7 +27,7 @@ def MultiplicativeSet : Submonoid R := {
     intro v hv
     specialize ha v hv
     specialize hb v hv
-    refine Ideal.IsPrime.mul_not_mem ?_ ha hb
+    refine Ideal.IsPrime.mul_notMem ?_ ha hb
     exact v.isPrime
   one_mem' := by
     simp only [Submodule.carrier_eq_coe, mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe,
@@ -41,12 +41,93 @@ theorem foo : S.MultiplicativeSet ≤ nonZeroDivisors R := fun _ h ↦ h.2
 
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 
+lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
+    ∀ (z : ↥(S.integer K)), ∃ x : R × ↥S.MultiplicativeSet,
+    z * (algebraMap R ↥(S.integer K)) ↑x.2 = (algebraMap R ↥(S.integer K)) x.1 := by
+  intro r
+  simp only [Prod.exists, Subtype.exists, exists_prop]
+  -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
+  --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
+
+  -- We know that v(r) ≥ 0 for all ν ∉ S.
+  --useless for the moment
+  have : ∀ v ∉ S, v.valuation K r ≤ 1 := fun _ h ↦ integer_valuation_le_one S K r h
+
+  -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T. this is where the denominator of r lies
+  have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≤ 1 := by
+    sorry
+
+  let ⟨T, hT⟩ := this
+  let I : Ideal R := ∏ v ∈ T, v.asIdeal
+
+  -- Show that v(I) = 1 for all v ∈ T.
+  --useless for the moment
+  have h_count : ∀ v ∈ T, FractionalIdeal.count K v I = 1 := by
+    intro v hv
+    simp [I, hT, hv]
+
+    sorry
+  have hI_ne_zero : I ≠ 0 := by
+    sorry
+  -- There exists n > 0 such that I^n is principal.
+  have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
+    let I' : (FractionalIdeal (nonZeroDivisors R) K)ˣ :={
+      val:= (FractionalIdeal.coeIdeal I)
+      inv := (FractionalIdeal.coeIdeal I)⁻¹
+      val_inv := by aesop
+      inv_val := by aesop
+    }
+    let I₀ := ClassGroup.mk I'
+    have : IsOfFinOrder I₀ := h I₀
+    rw [ isOfFinOrder_iff_pow_eq_one] at this
+    obtain ⟨n, hn, hI'⟩ := this
+    refine ⟨n, hn, ?_⟩
+    simp [I₀] at hI'
+    have :  ClassGroup.mk I' ^ n =  ClassGroup.mk (I' ^ n) := Eq.symm (MonoidHom.map_pow ClassGroup.mk I' n)
+    rw [this, ClassGroup.mk_eq_one_iff] at hI'
+    --better change claim of this lemma...
+
+    -- here we need the class group of the Dedekind domain to be a torsion group
+    sorry
+
+  -- There exists α such that I^n = (α)
+  obtain ⟨n, hn, ⟨α, hα⟩⟩ := this
+
+  -- This α : R has to satisfy v(α) ≥ 1 if v ∈ T [and v(α) ≥ 0 elsewise].
+  have : ∀ v ∈ T, v.valuation K (algebraMap R K α) < 1 := by
+    intro v hv
+    rw [valuation_lt_one_iff_mem]
+
+    --simp [HeightOneSpectrum.valuation, HeightOneSpectrum.intValuation, HeightOneSpectrum.intValuationDef]
+    sorry
+
+  have : ∃ m : ℕ, ∀ v ∈ T, v.valuation K ((algebraMap R K α ^ m) * r) ≤ 1 := by
+    sorry
+
+  obtain ⟨m, hm⟩ := this
+
+  have : ∃ β : R, (algebraMap R K β) = ((algebraMap R K α^m) * r) := by
+    sorry
+
+  obtain ⟨β, hβ⟩ := this
+
+  use β
+
+  use α^m
+
+  constructor
+  ·
+    sorry
+  · simp [hβ]
+    sorry
+
+
+
 --#count_heartbeats in
-instance inst (h : Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.MultiplicativeSet <| S.integer K where
-  map_units' := by sorry /- ## what is below should be commented out when working on thing below because it takes a bit to compile
-    simp only [M, Submodule.carrier_eq_coe,  Subtype.forall, Submonoid.mem_mk,
-      Subsemigroup.mem_mk]
-    intro r hr
+instance inst (h : Monoid.IsTorsion (ClassGroup R)) :
+    IsLocalization S.MultiplicativeSet <| S.integer K where
+  map_units y := by
+    obtain ⟨r, hr⟩ := y
     have h₀ : r ≠ 0 := nonZeroDivisors.ne_zero hr.2
     let x : Kˣ := {
       val := algebraMap R K r
@@ -56,96 +137,14 @@ instance inst (h : Monoid.IsTorsion (ClassGroup R)) : IsLocalization S.Multiplic
     }
     have : x ∈ S.unit K := by
       intro v hv
-      have hmem : r ∉ v.asIdeal := by simp_all
-      rw [HeightOneSpectrum.valuation_of_algebraMap, HeightOneSpectrum.intValuation_apply]
-      --make a PR with this?
-
-      have := v.intValuation_le_one r
-      rw [le_iff_lt_or_eq] at this
-      have : ¬ v.intValuationDef r < 1 := by
-        rw [v.intValuation_lt_one_iff_dvd, Ideal.dvd_span_singleton]
-        exact hmem
+      have hmem : r ∉ v.asIdeal := by
+        have := hr.1
+        simp_all
+      rw [HeightOneSpectrum.valuation_of_algebraMap]
       simp_all
     use unitEquivUnitsInteger S K ⟨x, this⟩
-    rfl -/
-  surj' := by
-    intro r
-    simp only [Prod.exists, Subtype.exists, exists_prop]
-    -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
-    --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
-
-    -- We know that v(r) ≥ 0 for all ν ∉ S.
-    --useless for the moment
-    have : ∀ v ∉ S, v.valuation K r ≤ 1 := fun _ h ↦ integer_valuation_le_one S K r h
-
-    -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T. this is where the denominator of r lies
-    have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≤ 1 := by
-      sorry
-
-    let ⟨T, hT⟩ := this
-    let I : Ideal R := ∏ v ∈ T, v.asIdeal
-
-    -- Show that v(I) = 1 for all v ∈ T.
-    --useless for the moment
-    have h_count : ∀ v ∈ T, FractionalIdeal.count K v I = 1 := by
-      intro v hv
-      simp [I, hT, hv]
-
-      sorry
-    have hI_ne_zero : I ≠ 0 := by
-      sorry
-    -- There exists n > 0 such that I^n is principal.
-    have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
-      let I' : (FractionalIdeal (nonZeroDivisors R) K)ˣ :={
-        val:= (FractionalIdeal.coeIdeal I)
-        inv := (FractionalIdeal.coeIdeal I)⁻¹
-        val_inv := by aesop
-        inv_val := by aesop
-      }
-      let I₀ := ClassGroup.mk I'
-      have : IsOfFinOrder I₀ := h I₀
-      rw [ isOfFinOrder_iff_pow_eq_one] at this
-      obtain ⟨n, hn, hI'⟩ := this
-      refine ⟨n, hn, ?_⟩
-      simp [I₀] at hI'
-      have :  ClassGroup.mk I' ^ n =  ClassGroup.mk (I' ^ n) := Eq.symm (MonoidHom.map_pow ClassGroup.mk I' n)
-      rw [this, ClassGroup.mk_eq_one_iff] at hI'
-      --better change claim of this lemma...
-
-      -- here we need the class group of the Dedekind domain to be a torsion group
-      sorry
-
-    -- There exists α such that I^n = (α)
-    obtain ⟨n, hn, ⟨α, hα⟩⟩ := this
-
-    -- This α : R has to satisfy v(α) ≥ 1 if v ∈ T [and v(α) ≥ 0 elsewise].
-    have : ∀ v ∈ T, v.valuation K (algebraMap R K α) < 1 := by
-      intro v hv
-      rw [valuation_lt_one_iff_mem]
-
-      --simp [HeightOneSpectrum.valuation, HeightOneSpectrum.intValuation, HeightOneSpectrum.intValuationDef]
-      sorry
-
-    have : ∃ m : ℕ, ∀ v ∈ T, v.valuation K ((algebraMap R K α ^ m) * r) ≤ 1 := by
-      sorry
-
-    obtain ⟨m, hm⟩ := this
-
-    have : ∃ β : R, (algebraMap R K β) = ((algebraMap R K α^m) * r) := by
-      sorry
-
-    obtain ⟨β, hβ⟩ := this
-
-    use β
-
-    use α^m
-
-    constructor
-    ·
-      sorry
-    · simp [hβ]
-      sorry
-
+    rfl
+  surj z := sur S K h z
   exists_of_eq := by
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
     intro r₁ r₂ h
