@@ -39,13 +39,28 @@ def MultiplicativeSet : Submonoid R := {
 
 theorem foo : S.MultiplicativeSet ≤ nonZeroDivisors R := fun _ h ↦ h.2
 
---- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
+lemma Ideal.pow_eq_bot {R : Type*} (n : ℕ) [Semiring R] {I : Ideal R} [NoZeroDivisors R] :
+    I ^ (n + 1) = ⊥ ↔ I = ⊥ := by
+  induction n with
+  | zero => simp [Submodule.pow_one]
+  | succ n ih =>
+    constructor
+    · intro h
+      rw [Submodule.pow_succ, Ideal.mul_eq_bot] at h
+      rcases h with h | h
+      · rwa [← ih]
+      · exact h
+    · simp_all
 
+
+--- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
+set_option maxHeartbeats 500000 in
 lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
-    ∀ (z : ↥(S.integer K)), ∃ x : R × ↥S.MultiplicativeSet,
-    z * (algebraMap R ↥(S.integer K)) ↑x.2 = (algebraMap R ↥(S.integer K)) x.1 := by
+    ∀ z : S.integer K, ∃ x : R × S.MultiplicativeSet,
+    z * (algebraMap R (S.integer K)) x.2 = (algebraMap R (S.integer K)) x.1 := by
   intro r
   simp only [Prod.exists, Subtype.exists, exists_prop]
+
   -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
   --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
 
@@ -53,9 +68,31 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
   --useless for the moment
   have : ∀ v ∉ S, v.valuation K r ≤ 1 := fun _ h ↦ integer_valuation_le_one S K r h
 
-  -- There exists a finite subset T of S such that v(r) ≥ 0 for all ν ∈ S \ T. this is where the denominator of r lies
-  have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (↑r : K) ≤ 1 := by
-    sorry
+ /-  let T' := {T | ∀ v ∈ S \ T, v.valuation K (r : K) ≤ 1}
+  have : T'.Finite := by sorry
+  let T := this.toFinset
+   -/
+
+  --let T : (Finset <| HeightOneSpectrum R) := ⟨sorry, sorry ⟩
+
+  -- There exists a finite subset T of S such that v(r) ≥ 0 for all v ∈ S \ T. this is where the denominator of r lies
+  have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (r : K) ≤ 1 := by
+    let T := {v : HeightOneSpectrum R | 1 < v.valuation K (r : K)}
+    have : T.Finite := by
+      have := FractionalIdeal.finite_factors <| FractionalIdeal.spanSingleton R⁰ (r : K)
+      simp [T]
+      rw [Filter.eventually_cofinite] at this
+      apply Finite.subset this
+      intro v hv
+      simp  at hv
+      simp
+      obtain ⟨r, hr⟩ := r
+      simp_all
+      rw [← adicValued_apply] at hv
+
+      sorry
+    use this.toFinset
+    aesop
 
   let ⟨T, hT⟩ := this
   let I : Ideal R := ∏ v ∈ T, v.asIdeal
@@ -68,7 +105,16 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
 
     sorry
   have hI_ne_zero : I ≠ 0 := by
-    sorry
+    intro hI
+    rw [hI] at h_count
+    simp_all only [mem_diff, SetLike.mem_coe, and_imp, Submodule.zero_eq_bot, FractionalIdeal.coeIdeal_bot, I]
+    obtain ⟨val, property⟩ := r
+    obtain ⟨w, h_1⟩ := this
+    simp_all only
+    rw [bot_eq_zero, Finset.prod_eq_zero_iff] at hI
+    obtain ⟨v, hvT, hvI⟩ := hI
+    rw [← bot_eq_zero] at hvI
+    exact v.3 hvI
   -- There exists n > 0 such that I^n is principal.
   have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
     let I' : (FractionalIdeal (nonZeroDivisors R) K)ˣ :={
@@ -86,6 +132,9 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
     have :  ClassGroup.mk I' ^ n =  ClassGroup.mk (I' ^ n) := Eq.symm (MonoidHom.map_pow ClassGroup.mk I' n)
     rw [this, ClassGroup.mk_eq_one_iff] at hI'
     --better change claim of this lemma...
+    simp [I'] at hI'
+
+    --obtain ⟨x, hx⟩ := hI'
 
     -- here we need the class group of the Dedekind domain to be a torsion group
     sorry
@@ -110,15 +159,30 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
     sorry
 
   obtain ⟨β, hβ⟩ := this
-
   use β
-
-  use α^m
-
+  use α ^ m
   constructor
-  ·
-    sorry
-  · simp [hβ]
+  · refine Submonoid.pow_mem S.MultiplicativeSet ?_ m
+    simp [MultiplicativeSet]
+    simp at hα
+    constructor
+    · intro v
+      /- contrapose
+      intro hv -/
+
+
+
+      --rw [← @intValuation_eq_one_iff]
+
+      sorry
+    · intro rfl
+      apply hI_ne_zero
+      rw [Ideal.span_singleton_zero] at hα
+      rw [Ideal.zero_eq_bot, ← Ideal.pow_eq_bot (n - 1), ← hα]
+      congr
+      omega
+  · simp
+
     sorry
 
 
@@ -156,7 +220,8 @@ instance inst (h : Monoid.IsTorsion (ClassGroup R)) :
       intro s hs
       exact (Ideal.ne_top_iff_one s.asIdeal).mp Ideal.IsPrime.ne_top'
     · left
-      have : ((algebraMap R ↥(S.integer K)) r₁ : K) = (algebraMap R ↥(S.integer K)) r₂ := congrArg Subtype.val h
+      have : ((algebraMap R (S.integer K)) r₁ : K) = (algebraMap R (S.integer K)) r₂ :=
+        congrArg Subtype.val h
       simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
       exact this
 
