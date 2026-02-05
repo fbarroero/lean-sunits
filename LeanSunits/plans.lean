@@ -52,6 +52,15 @@ lemma Ideal.pow_eq_bot {R : Type*} (n : ℕ) [Semiring R] {I : Ideal R} [NoZeroD
       · exact h
     · simp_all
 
+open IsLocalization in
+theorem IsLocalization.coeSubmodule_pow {R : Type*} [CommSemiring R] (S : Type*) [CommSemiring S] [Algebra R S]
+  (I : Ideal R) (n : ℕ):
+    coeSubmodule S (I ^ n) = coeSubmodule S I ^ n := by
+  induction n with
+  | zero => simp
+  | succ n ih =>
+    simp [Submodule.pow_succ, ih, IsLocalization.coeSubmodule_mul]
+
 
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 set_option maxHeartbeats 500000 in
@@ -79,16 +88,28 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
   have : ∃ T : (Finset <| HeightOneSpectrum R), ∀ v ∈ S \ T, v.valuation K (r : K) ≤ 1 := by
     let T := {v : HeightOneSpectrum R | 1 < v.valuation K (r : K)}
     have : T.Finite := by
+      rcases eq_or_ne (r : K) 0 with hr | hr
+      · simp [hr, T]
       have := FractionalIdeal.finite_factors <| FractionalIdeal.spanSingleton R⁰ (r : K)
       simp [T]
       rw [Filter.eventually_cofinite] at this
+      --conv => enter [1,1]; ext v;  rw [Valuation.one_lt_val_iff _ hr]
+
       apply Finite.subset this
       intro v hv
-      simp  at hv
-      simp
       obtain ⟨r, hr⟩ := r
       simp_all
-      rw [← adicValued_apply] at hv
+      intro h
+      rw [lt_iff_not_ge] at hv
+      apply hv
+      apply le_of_eq
+      simp [valuation, Valuation.extendToLocalization]
+--mem_integers_of_valuation_le_one
+      convert h
+
+
+
+
 
       sorry
     use this.toFinset
@@ -101,7 +122,8 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
   --useless for the moment
   have h_count : ∀ v ∈ T, FractionalIdeal.count K v I = 1 := by
     intro v hv
-    simp [I, hT, hv]
+    simp [I]
+
 
     sorry
   have hI_ne_zero : I ≠ 0 := by
@@ -125,19 +147,16 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
     }
     let I₀ := ClassGroup.mk I'
     have : IsOfFinOrder I₀ := h I₀
-    rw [ isOfFinOrder_iff_pow_eq_one] at this
+    rw [isOfFinOrder_iff_pow_eq_one] at this
     obtain ⟨n, hn, hI'⟩ := this
     refine ⟨n, hn, ?_⟩
     simp [I₀] at hI'
-    have :  ClassGroup.mk I' ^ n =  ClassGroup.mk (I' ^ n) := Eq.symm (MonoidHom.map_pow ClassGroup.mk I' n)
+    have : ClassGroup.mk I' ^ n = ClassGroup.mk (I' ^ n) := (MonoidHom.map_pow ClassGroup.mk I' n).symm
     rw [this, ClassGroup.mk_eq_one_iff] at hI'
-    --better change claim of this lemma...
-    simp [I'] at hI'
-
-    --obtain ⟨x, hx⟩ := hI'
-
-    -- here we need the class group of the Dedekind domain to be a torsion group
-    sorry
+    simp only [Units.val_pow_eq_pow_val, FractionalIdeal.coe_pow, FractionalIdeal.coe_coeIdeal,
+      I'] at hI'
+    rw [← IsLocalization.coeSubmodule_pow] at hI'
+    simp_all
 
   -- There exists α such that I^n = (α)
   obtain ⟨n, hn, ⟨α, hα⟩⟩ := this
@@ -167,8 +186,9 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
     simp at hα
     constructor
     · intro v
-      /- contrapose
-      intro hv -/
+      contrapose
+      intro hv
+
 
 
 
