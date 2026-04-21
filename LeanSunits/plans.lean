@@ -197,7 +197,8 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
       sorry
     · intro rfl
       apply hI_ne_zero
-      rw [Ideal.span_singleton_zero] at hα
+
+      simp at hα
       rw [Ideal.zero_eq_bot, ← Ideal.pow_eq_bot (n - 1), ← hα]
       congr
       omega
@@ -242,8 +243,7 @@ instance inst (h : Monoid.IsTorsion (ClassGroup R)) :
     · left
       have : ((algebraMap R (S.integer K)) r₁ : K) = (algebraMap R (S.integer K)) r₂ :=
         congrArg Subtype.val h
-      simp only [SubalgebraClass.coe_algebraMap, IsFractionRing.coe_inj] at this
-      exact this
+      simp_all
 
 -- S.integers are a Dedekind domain.
 instance isDedekindDomain (h : Monoid.IsTorsion (ClassGroup R)) : IsDedekindDomain (S.integer K) := by
