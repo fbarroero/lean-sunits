@@ -145,13 +145,13 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
       val_inv := by aesop
       inv_val := by aesop
     }
-    let I₀ := ClassGroup.mk I'
+    let I₀ := ClassGroup.mk K I'
     have : IsOfFinOrder I₀ := h I₀
     rw [isOfFinOrder_iff_pow_eq_one] at this
     obtain ⟨n, hn, hI'⟩ := this
     refine ⟨n, hn, ?_⟩
     simp [I₀] at hI'
-    have : ClassGroup.mk I' ^ n = ClassGroup.mk (I' ^ n) := (MonoidHom.map_pow ClassGroup.mk I' n).symm
+    have : ClassGroup.mk K I' ^ n = ClassGroup.mk K (I' ^ n) := (MonoidHom.map_pow (ClassGroup.mk K) I' n).symm
     rw [this, ClassGroup.mk_eq_one_iff] at hI'
     simp only [Units.val_pow_eq_pow_val, FractionalIdeal.coe_pow, FractionalIdeal.coe_coeIdeal,
       I'] at hI'
