@@ -64,7 +64,7 @@ theorem IsLocalization.coeSubmodule_pow {R : Type*} [CommSemiring R] (S : Type*)
 
 --- We prove that the S.integers are indeed a localization. Should probably not be here but in Sinteger.lean?
 set_option maxHeartbeats 500000 in
-lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
+lemma sur [Fact (Monoid.IsTorsion (ClassGroup R))] :
     ∀ z : S.integer K, ∃ x : R × S.MultiplicativeSet,
     z * (algebraMap R (S.integer K)) x.2 = (algebraMap R (S.integer K)) x.1 := by
   intro r
@@ -139,6 +139,7 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
     exact v.3 hvI
   -- There exists n > 0 such that I^n is principal.
   have : ∃ n : ℕ, 0 < n ∧ (I ^ n).IsPrincipal := by
+    let h : Monoid.IsTorsion (ClassGroup R) := Fact.out
     let I' : (FractionalIdeal (nonZeroDivisors R) K)ˣ :={
       val:= (FractionalIdeal.coeIdeal I)
       inv := (FractionalIdeal.coeIdeal I)⁻¹
@@ -183,7 +184,7 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
   constructor
   · refine Submonoid.pow_mem S.MultiplicativeSet ?_ m
     simp [MultiplicativeSet]
-    simp at hα
+    --simp at hα
     constructor
     · intro v
       contrapose
@@ -209,7 +210,7 @@ lemma sur (h : Monoid.IsTorsion (ClassGroup R)) :
 
 
 --#count_heartbeats in
-instance inst (h : Monoid.IsTorsion (ClassGroup R)) :
+instance inst [Fact (Monoid.IsTorsion (ClassGroup R))] :
     IsLocalization S.MultiplicativeSet <| S.integer K where
   map_units y := by
     obtain ⟨r, hr⟩ := y
@@ -229,7 +230,7 @@ instance inst (h : Monoid.IsTorsion (ClassGroup R)) :
       simp_all
     use unitEquivUnitsInteger S K ⟨x, this⟩
     rfl
-  surj z := sur S K h z
+  surj z := sur S K z
   exists_of_eq := by
     simp only [mul_eq_mul_left_iff, Subtype.exists, exists_prop]
     intro r₁ r₂ h
@@ -246,8 +247,8 @@ instance inst (h : Monoid.IsTorsion (ClassGroup R)) :
       simp_all
 
 -- S.integers are a Dedekind domain.
-instance isDedekindDomain (h : Monoid.IsTorsion (ClassGroup R)) : IsDedekindDomain (S.integer K) := by
-  have : IsLocalization S.MultiplicativeSet ↥(S.integer K) := inst S K h
+instance isDedekindDomain [Fact (Monoid.IsTorsion (ClassGroup R))] : IsDedekindDomain (S.integer K) := by
+  have : IsLocalization S.MultiplicativeSet ↥(S.integer K) := inst S K
   exact  IsLocalization.isDedekindDomain _ (foo S) _
 
 
