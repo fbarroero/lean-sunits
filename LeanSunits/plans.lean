@@ -19,7 +19,7 @@ variable
 all ν ∉ S. Note that we allow infinite sets S, for which M would contain 0 unless we intersect with
 (nonZeroDivisors R). -/
 
-def MultiplicativeSet : Submonoid R := {
+def Submonoid : Submonoid R := {
   carrier := (⋂ (v : HeightOneSpectrum R) (_ : v ∉ S), (v.asIdeal.carrier)ᶜ) ∩ (nonZeroDivisors R)
   mul_mem' := by
     rintro _ _ ⟨ha, ha0⟩ ⟨hb, hb0⟩
@@ -40,7 +40,7 @@ lemma Ideal.pow_eq_bot {R : Type*} (n : ℕ) [Semiring R] {I : Ideal R} [NoZeroD
   -- relevant stuff: https://math.stackexchange.com/questions/3366605/two-different-ways-of-presenting-the-ring-of-s-integers?rq=1
   --https://math.stackexchange.com/questions/3448941/is-ring-of-s-integers-a-dedekind-domain
 lemma sur [Fact (Monoid.IsTorsion (ClassGroup R))] :
-    ∀ z : S.integer K, ∃ x : R × S.MultiplicativeSet,
+    ∀ z : S.integer K, ∃ x : R × S.Submonoid,
     z * (algebraMap R (S.integer K)) x.2 = (algebraMap R (S.integer K)) x.1 := by
   intro r
   simp only [Prod.exists, Subtype.exists, exists_prop]
@@ -134,8 +134,8 @@ lemma sur [Fact (Monoid.IsTorsion (ClassGroup R))] :
       (HeightOneSpectrum.mem_integers_of_valuation_le_one (R := R) (K := K)
         ((algebraMap R K α ^ m) * r) hx)
   refine ⟨β, α ^ m, ?_, ?_⟩
-  · refine Submonoid.pow_mem S.MultiplicativeSet ?_ m
-    simp [MultiplicativeSet]
+  · refine Submonoid.pow_mem S.Submonoid ?_ m
+    simp [Submonoid]
     refine ⟨?_, hα_ne_zero⟩
     intro v hvS hvα
     obtain ⟨w, hwT, hwle⟩ :=
@@ -153,7 +153,7 @@ lemma sur [Fact (Monoid.IsTorsion (ClassGroup R))] :
 
 --#count_heartbeats in
 instance inst [Fact (Monoid.IsTorsion (ClassGroup R))] :
-    IsLocalization S.MultiplicativeSet <| S.integer K where
+    IsLocalization S.Submonoid <| S.integer K where
   map_units y := by
     obtain ⟨r, hr⟩ := y
     have h₀ : r ≠ 0 := nonZeroDivisors.ne_zero hr.2
@@ -178,7 +178,7 @@ instance inst [Fact (Monoid.IsTorsion (ClassGroup R))] :
     intro r₁ r₂ h
     use 1
     constructor
-    · simp only [MultiplicativeSet, Submodule.carrier_eq_coe, Submonoid.mem_mk,
+    · simp only [Submonoid, Submodule.carrier_eq_coe, Submonoid.mem_mk,
       Subsemigroup.mem_mk, mem_inter_iff, mem_iInter, mem_compl_iff, SetLike.mem_coe,
       mem_nonZeroDivisors_iff_ne_zero, ne_eq, one_ne_zero, not_false_eq_true, and_true]
       intro s hs
@@ -190,8 +190,8 @@ instance inst [Fact (Monoid.IsTorsion (ClassGroup R))] :
 
 -- S.integers are a Dedekind domain.
 instance isDedekindDomain [Fact (Monoid.IsTorsion (ClassGroup R))] : IsDedekindDomain (S.integer K) :=
-  --have : IsLocalization S.MultiplicativeSet ↥(S.integer K) := inst S K
-  IsLocalization.isDedekindDomain _ (fun _ h ↦ h.2 : S.MultiplicativeSet ≤ nonZeroDivisors R) _
+  --have : IsLocalization S.Submonoid ↥(S.integer K) := inst S K
+  IsLocalization.isDedekindDomain _ (fun _ h ↦ h.2 : S.Submonoid ≤ nonZeroDivisors R) _
 
 
 
